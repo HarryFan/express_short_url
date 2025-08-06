@@ -20,12 +20,14 @@
 ### 安裝步驟
 
 1. 克隆專案：
+
    ```bash
    git clone https://github.com/HarryFan/express_short_url.git
    cd express_short_url
    ```
 
 2. 安裝依賴：
+
    ```bash
    npm install
    # 或
@@ -33,6 +35,7 @@
    ```
 
 3. 啟動服務：
+
    ```bash
    npm start
    # 或
@@ -98,4 +101,4 @@ MIT
 
 ## 作者
 
-[你的名字] - [你的網站/個人資料連結]
+[HarryFan] - [https://github.com/HarryFan]
