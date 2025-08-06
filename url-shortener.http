@@ -1,0 +1,39 @@
+@baseUrl = http://localhost:3001
+@contentType = application/json
+
+### 1. 首頁
+GET {{baseUrl}}/
+
+### 2. 建立短網址
+# @name createShortUrl
+POST {{baseUrl}}/api/shorten
+Content-Type: {{contentType}}
+
+{
+  "originalUrl": "https://www.example.com/very/long/url/that/needs/to/be/shortened"
+}
+
+### 3. 使用短網址重定向
+# 使用上一個請求返回的 shortCode
+GET {{baseUrl}}/{{createShortUrl.response.body.$.shortCode}}
+
+### 4. 獲取短網址資訊
+# 使用上一個請求返回的 shortCode
+GET {{baseUrl}}/api/url/{{createShortUrl.response.body.$.shortCode}}
+
+### 5. 獲取所有短網址（測試用）
+GET {{baseUrl}}/api/urls
+
+### 6. 測試無效的 URL
+POST {{baseUrl}}/api/shorten
+Content-Type: {{contentType}}
+
+{
+  "originalUrl": "not-a-valid-url"
+}
+
+### 7. 測試不存在的短網址
+GET {{baseUrl}}/nonexistent123
+
+### 8. 測試不存在的短網址資訊
+GET {{baseUrl}}/api/url/nonexistent123

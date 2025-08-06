@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <title>短網址產生器</title>
+    <style>
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        max-width: 600px;
+        margin: 50px auto;
+        padding: 2rem;
+        border: 1px solid #e0e0e0;
+        border-radius: 12px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+        background-color: #f9f9f9;
+      }
+      h1 {
+        color: #2c3e50;
+        text-align: center;
+        margin-bottom: 1.5rem;
+      }
+      .input-group {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 1rem;
+      }
+      input[type='text'] {
+        flex: 1;
+        padding: 12px;
+        border: 2px solid #ddd;
+        border-radius: 6px;
+        font-size: 1rem;
+        transition: border-color 0.3s;
+      }
+      input[type='text']:focus {
+        outline: none;
+        border-color: #3498db;
+      }
+      button {
+        padding: 0 24px;
+        background-color: #3498db;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: background-color 0.3s;
+      }
+      button:hover {
+        background-color: #2980b9;
+      }
+      #result {
+        margin-top: 1.5rem;
+        padding: 1rem;
+        border-radius: 6px;
+        background-color: #f0f8ff;
+        word-break: break-all;
+      }
+      .success {
+        color: #27ae60;
+      }
+      .error {
+        color: #e74c3c;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>🔗 短網址產生器</h1>
+    <div class="input-group">
+      <input 
+        type="text" 
+        id="originalUrl" 
+        placeholder="請輸入原始網址 (例如: https://example.com)" 
+        onkeypress="if(event.key === 'Enter') shortenUrl()"
+      />
+      <button onclick="shortenUrl()">產生短網址</button>
+    </div>
+    <div id="result"></div>
+    <div id="loading" style="display: none;">載入中...</div>
+
+    <script>
+      const urlInput = document.getElementById('originalUrl');
+      const resultDiv = document.getElementById('result');
+      const loadingDiv = document.getElementById('loading');
+      const shortenBtn = document.querySelector('button[onclick="shortenUrl()"]');
+
+      async function shortenUrl() {
+        const originalUrl = urlInput.value.trim();
+        
+        if (!originalUrl) {
+          resultDiv.innerHTML = '<span class="error">請輸入網址</span>';
+          resultDiv.style.display = 'block';
+          return;
+        }
+
+        let fullUrl = originalUrl;
+        if (!/^https?:\/\//i.test(originalUrl)) {
+          fullUrl = 'https://' + originalUrl;
+        }
+
+        loadingDiv.style.display = 'block';
+        resultDiv.style.display = 'none';
+        shortenBtn.disabled = true;
+
+        try {
+          const res = await fetch('/api/shorten', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ originalUrl: fullUrl }),
+          });
+
+          const data = await res.json();
+          console.log('API Response:', data);
+
+          if (!res.ok) {
+            throw new Error(data.error || '請求失敗');
+          }
+
+          if (data.status === 'error' || data.error) {
+            throw new Error(data.error || '未知錯誤');
+          }
+
+          const shortUrl = `http://localhost:3001/${data.shortCode}`;
+          resultDiv.innerHTML = `
+            <div class="success">
+              <p>✅ 短網址已建立！</p>
+              <p>原始網址: <a href="${data.originalUrl}" target="_blank">${data.originalUrl}</a></p>
+              <p>短網址: <a href="${shortUrl}" target="_blank">${shortUrl}</a></p>
+              <button onclick="copyToClipboard('${shortUrl}')" style="margin-top: 10px;">複製連結</button>
+              <div class="stats">
+                <span><i class="far fa-calendar-alt"></i> 創建時間: ${new Date(data.createdAt).toLocaleString()}</span>
+              </div>
+            </div>
+          `;
+          loadingDiv.style.display = 'none';
+          resultDiv.style.display = 'block';
+          shortenBtn.disabled = false;
+        } catch (err) {
+          console.error('Error:', err);
+          resultDiv.innerHTML = '<span class="error">❌ 發生錯誤，請稍後再試</span>';
+          loadingDiv.style.display = 'none';
+          resultDiv.style.display = 'block';
+          shortenBtn.disabled = false;
+        }
+      }
+
+      function copyToClipboard(text) {
+        navigator.clipboard.writeText(text).then(() => {
+          const button = document.querySelector('button[onclick^="copyToClipboard"]');
+          if (button) {
+            const originalText = button.textContent;
+            button.textContent = '已複製！';
+            button.style.backgroundColor = '#27ae60';
+            setTimeout(() => {
+              button.textContent = originalText;
+              button.style.backgroundColor = '#3498db';
+            }, 2000);
+          }
+        }).catch(err => {
+          console.error('複製失敗:', err);
+        });
+      }
+    </script>
+  </body>
+</html>
